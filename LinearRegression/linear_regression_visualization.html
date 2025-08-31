@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linear Regression Animation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .main-content {
+            display: block;
+            max-width: 100%;
+        }
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .info-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .data-table {
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background: #f8f9ff;
+        }
+        .equation {
+            background: #f0f4ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #667eea;
+        }
+        .equation h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .math {
+            font-family: 'Times New Roman', serif;
+            font-size: 18px;
+            color: #444;
+            margin: 5px 0;
+        }
+        .current-line-info {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .best-fit-info {
+            background: #d4edda;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #28a745;
+        }
+        .error-display {
+            background: #f8d7da;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #dc3545;
+            font-weight: 600;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background: #f8f9fa;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .legend-line {
+            width: 20px;
+            height: 3px;
+            border-radius: 2px;
+        }
+        #chart {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            display: block;
+            margin: 0 auto;
+        }
+        .step-indicator {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            #calculationSection > div:first-child {
+                grid-template-columns: 1fr !important;
+            }
+            table {
+                font-size: 12px;
+            }
+            th, td {
+                padding: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🥔 Linear Regression: Finding the Best-Fit Line</h1>
+        
+        <div class="main-content">
+            <div class="chart-container">
+                <div class="controls">
+                    <button onclick="startAnimation()">▶️ Start Animation</button>
+                    <button id="pauseToggle" onclick="togglePause()" style="display: none;">⏸️ Pause</button>
+                    <button id="speedToggle" onclick="toggleSpeed()">🐌 Slow Mode</button>
+                    <button onclick="resetAnimation()">🔄 Reset</button>
+                    <button onclick="showBestFit()">⭐ Show Best Fit</button>
+                </div>
+                <div class="step-indicator" id="stepIndicator">Click "Start Animation" to begin</div>
+                <canvas id="chart" width="700" height="500"></canvas>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #3498db;"></div>
+                        <span>Data Points</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-line" style="background: #e74c3c;"></div>
+                        <span>Candidate Lines</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-line" style="background: #27ae60;"></div>
+                        <span>Best-Fit Line</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-line" style="background: #f39c12; height: 1px;"></div>
+                        <span>Residuals</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="calculationSection" class="chart-container" style="display: none; margin-top: 20px;">
+                <h3 style="text-align: center; color: #667eea; margin-bottom: 20px;">📊 Live Mathematical Calculations</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                    <div>
+                        <h4 style="color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px;">Current Line Analysis</h4>
+                        <div id="currentEquationDisplay" class="math" style="font-size: 20px; margin: 15px 0; color: #e74c3c; font-weight: bold;"></div>
+                        <table id="calculationTable" style="width: 100%; margin-top: 15px;">
+                            <thead>
+                                <tr style="background: linear-gradient(45deg, #667eea, #764ba2); color: white;">
+                                    <th style="padding: 10px;">x</th>
+                                    <th style="padding: 10px;">y (actual)</th>
+                                    <th style="padding: 10px;">ŷ (predicted)</th>
+                                    <th style="padding: 10px;">Residual</th>
+                                    <th style="padding: 10px;">Residual²</th>
+                                </tr>
+                            </thead>
+                            <tbody id="calculationTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div>
+                        <h4 style="color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px;">Step-by-Step Calculation</h4>
+                        <div id="stepByStepCalc" style="background: #f8f9ff; padding: 20px; border-radius: 10px; border-left: 4px solid #667eea;">
+                            <div style="margin-bottom: 15px;">
+                                <strong>For line: <span id="currentLineEq2"></span></strong>
+                            </div>
+                            <div id="predictionSteps"></div>
+                            <div id="residualSteps"></div>
+                            <div id="sseCalculation" style="margin-top: 15px; padding: 15px; background: #fff; border-radius: 8px; border: 2px solid #667eea;">
+                            </div>
+                        </div>
+                        <div id="comparisonBox" style="margin-top: 20px; padding: 15px; border-radius: 10px;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-panel" style="grid-column: 1 / -1; margin-top: 20px;">
+                <div class="data-table">
+                    <h3>📊 Potato Farming Data</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fertilizer (kg)</th>
+                                <th>Yield (tons)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>1</td><td>2</td></tr>
+                            <tr><td>2</td><td>3</td></tr>
+                            <tr><td>3</td><td>4</td></tr>
+                            <tr><td>4</td><td>5</td></tr>
+                            <tr><td>5</td><td>7</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="equation">
+                    <h3>📚 Understanding Linear Regression</h3>
+                    <div style="text-align: left; line-height: 1.6;">
+                        <p><strong>1. Concept:</strong> Linear regression helps us predict a dependent variable (like potato yield) based on an independent variable (like the amount of fertilizer).</p>
+                        
+                        <p><strong>2. Equation:</strong> The model is represented as <span class="math">y = b₀ + b₁x</span>, where:</p>
+                        <ul style="margin: 10px 0;">
+                            <li><strong>y</strong> is the predicted yield</li>
+                            <li><strong>x</strong> is the amount of fertilizer</li>
+                            <li><strong>b₀</strong> is the y-intercept</li>
+                            <li><strong>b₁</strong> is the slope, indicating how the yield changes with fertilizer</li>
+                        </ul>
+                        
+                        <p><strong>3. Goal:</strong> The aim is to find the line that best fits the data points. This is achieved by minimizing the sum of squared residuals, which are the differences between the actual and predicted values.</p>
+                        
+                        <p><strong>4. Practical Example:</strong> In the context of potato farming, we look at how the yield changes with varying amounts of fertilizer. The best-fit line gives us a predictive relationship that helps optimize fertilizer usage for maximum yield.</p>
+                    </div>
+                </div>
+
+                <div class="equation">
+                    <h3>🎯 Target Equation</h3>
+                    <div class="math">y = b₀ + b₁x</div>
+                    <div class="math">Where:</div>
+                    <div class="math">• b₀ = y-intercept</div>
+                    <div class="math">• b₁ = slope</div>
+                </div>
+
+                <div id="currentLineInfo" class="current-line-info" style="display: none;">
+                    <h4>🔍 Current Line Analysis</h4>
+                    <div id="lineEquation"></div>
+                    <div id="lineError"></div>
+                </div>
+
+                <div id="calculationSteps" class="equation" style="display: none;">
+                    <h3>📐 Detailed Calculation Steps</h3>
+                    <div class="math">
+                        <strong>Step 1 - Calculate Averages:</strong><br>
+                        x̄ = (1+2+3+4+5)/5 = 15/5 = 3.0<br>
+                        ȳ = (2+3+4+5+7)/5 = 21/5 = 4.2<br><br>
+                        
+                        <strong>Step 2 - Calculate Slope (b₁):</strong><br>
+                        b₁ = Σ(xᵢ - x̄)(yᵢ - ȳ) / Σ(xᵢ - x̄)²<br>
+                        Numerator = (1-3)(2-4.2) + (2-3)(3-4.2) + (3-3)(4-4.2) + (4-3)(5-4.2) + (5-3)(7-4.2)<br>
+                        = (-2)(-2.2) + (-1)(-1.2) + (0)(-0.2) + (1)(0.8) + (2)(2.8)<br>
+                        = 4.4 + 1.2 + 0 + 0.8 + 5.6 = 12<br>
+                        Denominator = (1-3)² + (2-3)² + (3-3)² + (4-3)² + (5-3)²<br>
+                        = 4 + 1 + 0 + 1 + 4 = 10<br>
+                        b₁ = 12/10 = 1.2<br><br>
+                        
+                        <strong>Step 3 - Calculate Intercept (b₀):</strong><br>
+                        b₀ = ȳ - b₁x̄ = 4.2 - (1.2)(3) = 4.2 - 3.6 = 0.6
+                    </div>
+                </div>
+
+                <div id="bestFitInfo" class="best-fit-info" style="display: none;">
+                    <h3>🏆 Best-Fit Line Found!</h3>
+                    <div class="math"><strong>ŷ = 0.6 + 1.2x</strong></div>
+                    <div style="margin-top: 10px;">
+                        <strong>Interpretation:</strong><br>
+                        • Each kg of fertilizer increases yield by 1.2 tons<br>
+                        • With 0 kg fertilizer, base yield is 0.6 tons<br>
+                        • Sum of Squared Errors: <span id="finalSSE"></span>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressBar" style="width: 0%;"></div>
+                </div>
+                <div style="text-align: center; margin-top: 10px;">
+                    <small id="progressText">Ready to start</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data points from the example
+        const data = [
+            {x: 1, y: 2},
+            {x: 2, y: 3},
+            {x: 3, y: 4},
+            {x: 4, y: 5},
+            {x: 5, y: 7}
+        ];
+
+        // Calculate means
+        const xMean = data.reduce((sum, point) => sum + point.x, 0) / data.length;
+        const yMean = data.reduce((sum, point) => sum + point.y, 0) / data.length;
+
+        // Calculate best-fit parameters
+        const numerator = data.reduce((sum, point) => sum + (point.x - xMean) * (point.y - yMean), 0);
+        const denominator = data.reduce((sum, point) => sum + Math.pow(point.x - xMean, 2), 0);
+        const bestB1 = numerator / denominator;
+        const bestB0 = yMean - bestB1 * xMean;
+
+        const canvas = document.getElementById('chart');
+        const ctx = canvas.getContext('2d');
+        
+        let animationState = 'stopped';
+        let currentStep = 0;
+        let animationFrame;
+        let animationSpeed = 800; // milliseconds between frames
+        let isSlowMode = false;
+        let isPaused = false;
+
+        // Generate candidate lines to test
+        const candidateLines = [];
+        for (let b0 = -1; b0 <= 3; b0 += 0.4) {
+            for (let b1 = 0.5; b1 <= 2; b1 += 0.15) {
+                candidateLines.push({b0, b1});
+            }
+        }
+
+        // Add the actual best fit line to ensure it's included
+        candidateLines.push({b0: bestB0, b1: bestB1, isBest: true});
+
+        function calculateSSE(b0, b1) {
+            return data.reduce((sum, point) => {
+                const predicted = b0 + b1 * point.x;
+                return sum + Math.pow(point.y - predicted, 2);
+            }, 0);
+        }
+
+        // Sort candidates by SSE
+        candidateLines.forEach(line => {
+            line.sse = calculateSSE(line.b0, line.b1);
+        });
+        candidateLines.sort((a, b) => a.sse - b.sse);
+
+        function scaleX(x) {
+            return 80 + (x - 0.5) * 100;
+        }
+
+        function scaleY(y) {
+            return 450 - (y - 1) * 60;
+        }
+
+        function drawChart(currentLineIndex = -1, showResiduals = false) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid
+            ctx.strokeStyle = '#f0f0f0';
+            ctx.lineWidth = 1;
+            for (let i = 1; i <= 6; i++) {
+                ctx.beginPath();
+                ctx.moveTo(scaleX(i), 50);
+                ctx.lineTo(scaleX(i), 450);
+                ctx.stroke();
+            }
+            for (let i = 1; i <= 8; i++) {
+                ctx.beginPath();
+                ctx.moveTo(80, scaleY(i));
+                ctx.lineTo(620, scaleY(i));
+                ctx.stroke();
+            }
+
+            // Draw axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(80, 450);
+            ctx.lineTo(620, 450);
+            ctx.moveTo(80, 50);
+            ctx.lineTo(80, 450);
+            ctx.stroke();
+
+            // Draw axis labels
+            ctx.fillStyle = '#333';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            for (let i = 1; i <= 6; i++) {
+                ctx.fillText(i.toString(), scaleX(i), 470);
+            }
+            ctx.textAlign = 'right';
+            for (let i = 1; i <= 8; i++) {
+                ctx.fillText(i.toString(), 75, scaleY(i) + 5);
+            }
+
+            // Axis titles
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText('Fertilizer (kg)', 350, 495);
+            ctx.save();
+            ctx.translate(25, 250);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('Potato Yield (tons)', 0, 0);
+            ctx.restore();
+
+            // Draw candidate lines (up to current)
+            if (currentLineIndex >= 0) {
+                for (let i = 0; i <= Math.min(currentLineIndex, candidateLines.length - 1); i++) {
+                    const line = candidateLines[i];
+                    const alpha = i === currentLineIndex ? 1 : 0.3;
+                    const color = line.isBest ? '#27ae60' : '#e74c3c';
+                    
+                    ctx.strokeStyle = color;
+                    ctx.globalAlpha = alpha;
+                    ctx.lineWidth = line.isBest ? 4 : 2;
+                    
+                    ctx.beginPath();
+                    const x1 = 0.5, x2 = 6;
+                    const y1 = line.b0 + line.b1 * x1;
+                    const y2 = line.b0 + line.b1 * x2;
+                    ctx.moveTo(scaleX(x1), scaleY(y1));
+                    ctx.lineTo(scaleX(x2), scaleY(y2));
+                    ctx.stroke();
+                    ctx.globalAlpha = 1;
+                }
+            }
+
+            // Draw residuals for current line
+            if (showResiduals && currentLineIndex >= 0) {
+                const currentLine = candidateLines[currentLineIndex];
+                ctx.strokeStyle = '#f39c12';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                data.forEach(point => {
+                    const predicted = currentLine.b0 + currentLine.b1 * point.x;
+                    ctx.beginPath();
+                    ctx.moveTo(scaleX(point.x), scaleY(point.y));
+                    ctx.lineTo(scaleX(point.x), scaleY(predicted));
+                    ctx.stroke();
+                });
+                ctx.setLineDash([]);
+            }
+
+            // Draw data points (always on top)
+            data.forEach(point => {
+                ctx.fillStyle = '#3498db';
+                ctx.beginPath();
+                ctx.arc(scaleX(point.x), scaleY(point.y), 8, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.strokeStyle = '#2980b9';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Label the points
+                ctx.fillStyle = '#333';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`(${point.x}, ${point.y})`, scaleX(point.x), scaleY(point.y) - 15);
+            });
+        }
+
+        function updateCalculationSection(lineIndex) {
+            const calculationSection = document.getElementById('calculationSection');
+            if (lineIndex < 0) {
+                calculationSection.style.display = 'none';
+                return;
+            }
+
+            calculationSection.style.display = 'block';
+            const line = candidateLines[lineIndex];
+            
+            // Update current equation display
+            document.getElementById('currentEquationDisplay').textContent = 
+                `y = ${line.b0.toFixed(2)} + ${line.b1.toFixed(2)}x`;
+            document.getElementById('currentLineEq2').textContent = 
+                `y = ${line.b0.toFixed(2)} + ${line.b1.toFixed(2)}x`;
+
+            // Update calculation table
+            const tableBody = document.getElementById('calculationTableBody');
+            tableBody.innerHTML = '';
+            
+            let sseTotal = 0;
+            let predictionStepsHtml = '<strong>Predictions:</strong><br>';
+            let residualStepsHtml = '<strong>Residuals (Actual - Predicted):</strong><br>';
+            
+            data.forEach((point, index) => {
+                const predicted = line.b0 + line.b1 * point.x;
+                const residual = point.y - predicted;
+                const residualSquared = residual * residual;
+                sseTotal += residualSquared;
+
+                // Add to table
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td style="padding: 8px; text-align: center;">${point.x}</td>
+                    <td style="padding: 8px; text-align: center;">${point.y}</td>
+                    <td style="padding: 8px; text-align: center; color: #e74c3c;">${predicted.toFixed(2)}</td>
+                    <td style="padding: 8px; text-align: center; color: ${residual >= 0 ? '#27ae60' : '#e74c3c'};">${residual.toFixed(2)}</td>
+                    <td style="padding: 8px; text-align: center; color: #f39c12;">${residualSquared.toFixed(3)}</td>
+                `;
+
+                // Add to step-by-step
+                predictionStepsHtml += `ŷ${index+1} = ${line.b0.toFixed(2)} + ${line.b1.toFixed(2)}(${point.x}) = ${predicted.toFixed(2)}<br>`;
+                residualStepsHtml += `e${index+1} = ${point.y} - ${predicted.toFixed(2)} = ${residual.toFixed(2)}<br>`;
+            });
+
+            document.getElementById('predictionSteps').innerHTML = predictionStepsHtml;
+            document.getElementById('residualSteps').innerHTML = residualStepsHtml;
+
+            // SSE calculation
+            const sseHtml = `
+                <strong>Sum of Squared Errors (SSE):</strong><br>
+                SSE = ${data.map((_, i) => `e${i+1}²`).join(' + ')}<br>
+                SSE = ${data.map((point, i) => {
+                    const predicted = line.b0 + line.b1 * point.x;
+                    const residual = point.y - predicted;
+                    return (residual * residual).toFixed(3);
+                }).join(' + ')}<br>
+                <strong style="color: #e74c3c; font-size: 18px;">SSE = ${sseTotal.toFixed(3)}</strong>
+            `;
+            document.getElementById('sseCalculation').innerHTML = sseHtml;
+
+            // Comparison with best so far
+            const bestSoFar = Math.min(...candidateLines.slice(0, lineIndex + 1).map(l => l.sse));
+            const comparisonBox = document.getElementById('comparisonBox');
+            
+            if (line.sse === bestSoFar) {
+                comparisonBox.innerHTML = `
+                    <div style="background: #d4edda; border: 2px solid #28a745; padding: 15px; border-radius: 10px;">
+                        <strong>🏆 NEW BEST LINE!</strong><br>
+                        This line has the lowest SSE so far: ${line.sse.toFixed(3)}
+                    </div>
+                `;
+            } else {
+                comparisonBox.innerHTML = `
+                    <div style="background: #f8d7da; border: 2px solid #dc3545; padding: 15px; border-radius: 10px;">
+                        <strong>❌ Not the best fit</strong><br>
+                        SSE = ${line.sse.toFixed(3)} > Best so far = ${bestSoFar.toFixed(3)}
+                    </div>
+                `;
+            }
+
+            // Special handling for the actual best-fit line
+            if (line.isBest) {
+                comparisonBox.innerHTML = `
+                    <div style="background: #d1ecf1; border: 2px solid #17a2b8; padding: 15px; border-radius: 10px;">
+                        <strong>🎯 OPTIMAL SOLUTION FOUND!</strong><br>
+                        This is the mathematically proven best-fit line<br>
+                        Minimum possible SSE = ${line.sse.toFixed(3)}
+                    </div>
+                `;
+            }
+        }
+
+        function updateInfoPanel(lineIndex) {
+            const currentLineInfo = document.getElementById('currentLineInfo');
+            const lineEquation = document.getElementById('lineEquation');
+            const lineError = document.getElementById('lineError');
+            const stepIndicator = document.getElementById('stepIndicator');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+
+            if (lineIndex >= 0 && lineIndex < candidateLines.length) {
+                const line = candidateLines[lineIndex];
+                currentLineInfo.style.display = 'block';
+                
+                lineEquation.innerHTML = `<strong>y = ${line.b0.toFixed(2)} + ${line.b1.toFixed(2)}x</strong>`;
+                lineError.innerHTML = `Sum of Squared Errors: <strong>${line.sse.toFixed(3)}</strong>`;
+                
+                const progress = ((lineIndex + 1) / candidateLines.length) * 100;
+                progressBar.style.width = progress + '%';
+                progressText.textContent = `Testing line ${lineIndex + 1} of ${candidateLines.length}`;
+                
+                if (line.isBest) {
+                    stepIndicator.textContent = '🏆 Best-Fit Line Found!';
+                    document.getElementById('bestFitInfo').style.display = 'block';
+                    document.getElementById('finalSSE').textContent = line.sse.toFixed(3);
+                    document.getElementById('calculationSteps').style.display = 'block';
+                } else {
+                    stepIndicator.textContent = `Testing candidate line ${lineIndex + 1}...`;
+                }
+            }
+            
+            // Update the calculation section
+            updateCalculationSection(lineIndex);
+        }
+
+        function toggleSpeed() {
+            isSlowMode = !isSlowMode;
+            animationSpeed = isSlowMode ? 1500 : 800;
+            const speedButton = document.getElementById('speedToggle');
+            speedButton.textContent = isSlowMode ? '🚀 Fast Mode' : '🐌 Slow Mode';
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            const pauseButton = document.getElementById('pauseToggle');
+            
+            if (isPaused) {
+                pauseButton.textContent = '▶️ Resume';
+                if (animationFrame) {
+                    clearTimeout(animationFrame);
+                }
+            } else {
+                pauseButton.textContent = '⏸️ Pause';
+                if (animationState === 'running') {
+                    // Resume animation
+                    animate();
+                }
+            }
+        }
+
+        function animate() {
+            if (animationState !== 'running' || isPaused) return;
+            
+            if (currentStep < candidateLines.length) {
+                drawChart(currentStep, true);
+                updateInfoPanel(currentStep);
+                currentStep++;
+                animationFrame = setTimeout(animate, animationSpeed);
+            } else {
+                animationState = 'completed';
+                document.getElementById('pauseToggle').style.display = 'none';
+                // Find and highlight the best line
+                const bestLineIndex = candidateLines.findIndex(line => line.isBest);
+                drawChart(bestLineIndex, true);
+                updateInfoPanel(bestLineIndex);
+            }
+        }
+
+        function startAnimation() {
+            if (animationState === 'running') return;
+            
+            animationState = 'running';
+            isPaused = false;
+            currentStep = 0;
+            
+            document.getElementById('bestFitInfo').style.display = 'none';
+            document.getElementById('calculationSteps').style.display = 'none';
+            document.getElementById('pauseToggle').style.display = 'inline-block';
+            document.getElementById('pauseToggle').textContent = '⏸️ Pause';
+            
+            animate();
+        }
+
+        function resetAnimation() {
+            animationState = 'stopped';
+            isPaused = false;
+            if (animationFrame) clearTimeout(animationFrame);
+            currentStep = 0;
+            
+            drawChart();
+            document.getElementById('currentLineInfo').style.display = 'none';
+            document.getElementById('bestFitInfo').style.display = 'none';
+            document.getElementById('calculationSteps').style.display = 'none';
+            document.getElementById('calculationSection').style.display = 'none';
+            document.getElementById('pauseToggle').style.display = 'none';
+            document.getElementById('stepIndicator').textContent = 'Click "Start Animation" to begin';
+            document.getElementById('progressBar').style.width = '0%';
+            document.getElementById('progressText').textContent = 'Ready to start';
+        }
+
+        function showBestFit() {
+            animationState = 'stopped';
+            if (animationFrame) clearTimeout(animationFrame);
+            
+            const bestLineIndex = candidateLines.findIndex(line => line.isBest);
+            drawChart(bestLineIndex, true);
+            updateInfoPanel(bestLineIndex);
+        }
+
+        // Initialize the chart
+        drawChart();
+
+        // Add some educational text
+        const educationalText = document.createElement('div');
+        educationalText.className = 'equation';
+        educationalText.innerHTML = `
+            <h3>🧠 How Linear Regression Works</h3>
+            <p><strong>The Process:</strong></p>
+            <p>1. <strong>Test Multiple Lines:</strong> We systematically try different combinations of slope (b₁) and intercept (b₀) values</p>
+            <p>2. <strong>Measure Prediction Errors:</strong> For each candidate line, we calculate how far off our predictions are from the actual data points</p>
+            <p>3. <strong>Calculate Sum of Squared Errors (SSE):</strong> We square each error and sum them up - this penalizes larger errors more heavily</p>
+            <p>4. <strong>Find the Minimum:</strong> The line with the smallest SSE becomes our best-fit line</p>
+            <p>5. <strong>Make Predictions:</strong> Use the final equation ŷ = 0.6 + 1.2x to predict potato yield for any fertilizer amount</p>
+            <br>
+            <p><strong>Key Insights from Our Example:</strong></p>
+            <p>• <strong>Slope (1.2):</strong> Each additional kg of fertilizer increases yield by 1.2 tons</p>
+            <p>• <strong>Intercept (0.6):</strong> Even with 0 kg fertilizer, we expect 0.6 tons base yield</p>
+            <p>• <strong>Practical Application:</strong> Farmers can optimize fertilizer usage for maximum yield</p>
+            <p>• <strong>Residuals:</strong> The yellow dotted lines show prediction errors - smaller residuals mean better predictions</p>
+        `;
+        document.querySelector('.info-panel').appendChild(educationalText);
+
+    </script>
+</body>
+</html>
